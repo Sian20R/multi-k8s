@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t vernseaw/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true vernseaw/react-test npm test
+
+after_success:
+  - docker build -t vernseaw/multi-client ./client
+  - docker build -t vernseaw/multi-nginx ./nginx
+  - docker build -t vernseaw/multi-server ./server
+  - docker build -t vernseaw/multi-worker ./worker
+  # Log in to the Docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push vernseaw/multi-client
+  - docker push vernseaw/multi-nginx
+  - docker push vernseaw/multi-server
+  - docker push vernseaw/multi-worker
